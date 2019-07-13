@@ -3,8 +3,8 @@ from discord import Member,Guild,User
 from discord.ext.commands.errors import *
 from discord.errors import Forbidden
 
-from discord_handler.meta import add_guild,get_user
-from db.models import DBUser,DBGuild,Error
+from BBase.helper import  add_guild,get_user
+from BBase.base_db.models import BaseGuild,BaseUser,Error
 import traceback
 
 class AuthorState:
@@ -12,8 +12,6 @@ class AuthorState:
     Mod = 2
     Owner = 3
     BotOwner = 4
-
-
 
 class ICog(Cog):
     def __init__(self, bot: Bot,min_perm :int):
@@ -75,9 +73,9 @@ class ICog(Cog):
 
     async def cog_before_invoke(self, ctx : Context):
         add_guild(ctx)
-        self.g = DBGuild.objects.get(id=ctx.guild.id)
+        self.g = BaseGuild.objects.get(id=ctx.guild.id)
         self.m : Member = ctx.guild.get_member(ctx.author.id)
-        self.u : DBUser = get_user(self.m,self.g)
+        self.u : BaseUser = get_user(self.m, self.g)
         try:
             self.u_perm_state = await self.a_perm_intern(self.u,self.m)
         except AttributeError:
@@ -86,12 +84,12 @@ class ICog(Cog):
 
     async def a_perm(self,ctx : Context):
         add_guild(ctx)
-        g = DBGuild.objects.get(id=ctx.guild.id)
+        g = BaseGuild.objects.get(id=ctx.guild.id)
         u = get_user(ctx.author,g)
         member = ctx.author
         return await self.a_perm_intern(u,member)
 
-    async def a_perm_intern(self,u : DBUser,member : Member):
+    async def a_perm_intern(self, u : BaseUser, member : Member):
         if await self.is_bot_owner(member):
             return AuthorState.BotOwner
         elif await  self.is_admin(member):
@@ -108,7 +106,7 @@ class ICog(Cog):
         bot_owner = self.bot.get_cog('BotOwner')
         return member.id == bot_owner.bot_owner_id
 
-    async def is_mod(self,u : DBUser,member : Member):
+    async def is_mod(self, u : BaseUser, member : Member):
         if u is not None:
             mod_role = u.g.m_role()
             mod_flag = u.g_mod
