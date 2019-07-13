@@ -28,7 +28,14 @@ class ICog(Cog):
 
     async def cog_command_error(self, ctx: Context, error: CommandError):
         if isinstance(error, CheckFailure):
-            await ctx.send('** Error **: You are not allowed to use this command!')
+            if isinstance(error,BotMissingPermissions):
+                text = "To use this command, the bot needs the following permissions:\n"
+                for i in error.missing_perms:
+                    text += f"**- {i}**\n"
+                text += "Please make sure that these are available to QOTDBot."
+                await ctx.send(text)
+            else:
+                await ctx.send('** Error **: You are not allowed to use this command!')
         elif isinstance(error, MissingRequiredArgument):
             await ctx.send(f"** Error **: Command _**{ctx.command.qualified_name}**_ misses some arguments."
                            f" See the help:")
@@ -44,7 +51,7 @@ class ICog(Cog):
                            f'check help.')
             await ctx.send_help(ctx.command)
 
-        elif isinstance(error,Forbidden):
+        elif isinstance(error.original,Forbidden):
             text = f'** Error **: Permissions missing for the Bot. The bot needs at least\n'\
                    f'__Manage Roles__\n'\
                    f'__Manage Channels__\n'\
@@ -59,7 +66,11 @@ class ICog(Cog):
             except Forbidden:
                 u :User= self.bot.get_user(ctx.author.id)
                 dm_channel = u.create_dm()
-                await dm_channel.send(text)
+                try:
+                    await dm_channel.send(text)
+                except Forbidden:
+                    pass
+
                 e = Error(g=self.g, cmd_string=ctx.message.system_content
                           , error_type=f'{type(error.original)}', error=f'{error}', traceback=traceback.format_exc())
                 e.save()
