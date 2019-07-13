@@ -4,7 +4,7 @@ from discord.ext.commands.errors import *
 from discord.errors import Forbidden
 
 from BBase.helper import  add_guild,get_user
-from BBase.base_db.models import BaseGuild,BaseUser,Error
+from db.models import DBGuild as BaseGuild,DBUser as BaseUser,Error
 import traceback
 
 class AuthorState:

@@ -1,8 +1,7 @@
 from typing import Union
 from discord import Guild,Member
 from discord.ext.commands import Context
-
-from BBase.base_db.models import BaseGuild,BaseUser
+from db.models import DBUser as BaseUser,DBGuild as BaseGuild
 
 def add_guild(ctx: Union[Context,Guild]):
     """
