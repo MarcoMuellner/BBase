@@ -6,6 +6,7 @@ from discord.errors import Forbidden
 from BBase.helper import  add_guild,get_user
 from BBase.base_db.models import BaseGuild,BaseUser,Error
 import traceback
+from typing import Union
 
 class AuthorState:
     User = 1
@@ -22,9 +23,12 @@ class ICog(Cog):
         perm = await self.a_perm(ctx)
         return perm >= self.min_perm
 
-    async def notify_error_bot_owner(self, e : Error,ctx : Context):
+    async def notify_error_bot_owner(self, e : Error,ctx : Union[Context,Guild]):
         bot_owner = self.bot.get_cog('BotOwner')
-        await bot_owner.send_error_notification(e,ctx.guild)
+        if isinstance(ctx,Context):
+            await bot_owner.send_error_notification(e,ctx.guild)
+        elif isinstance(ctx,Guild):
+            await bot_owner.send_error_notification(e, ctx)
 
     async def cog_command_error(self, ctx: Context, error: CommandError):
         g_id = ctx.guild.id if isinstance(ctx, Context) else ctx.id
