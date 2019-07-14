@@ -34,6 +34,16 @@ class ICog(Cog):
                     text += f"**- {i}**\n"
                 text += "Please make sure that these are available to QOTDBot."
                 await ctx.send(text)
+
+                guild = ctx.guild
+                me = guild.me if guild is not None else ctx.bot.user
+                permissions = ctx.channel.permissions_for(me)
+
+                e = Error(g=self.g, cmd_string=ctx.message.system_content
+                          , error_type=f'{type(error.original)}', error=f'{error}', traceback=f"Has : "
+                    f"{permissions}\n\nNeeds: {error.missing_perms}")
+                e.save()
+                await self.notify_error_bot_owner(e, ctx)
             else:
                 await ctx.send('** Error **: You are not allowed to use this command!')
         elif isinstance(error, MissingRequiredArgument):
