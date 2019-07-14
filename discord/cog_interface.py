@@ -27,6 +27,13 @@ class ICog(Cog):
         await bot_owner.send_error_notification(e,ctx.guild)
 
     async def cog_command_error(self, ctx: Context, error: CommandError):
+        g_id = ctx.guild.id if isinstance(ctx, Context) else ctx.id
+        g_name = ctx.guild.name if isinstance(ctx, Context) else ctx.name
+        try:
+            g = BaseGuild.objects.get(id=g_id)
+        except BaseGuild.DoesNotExist:
+            g = BaseGuild(id=g_id, name=g_name)
+            g.save()
         if isinstance(error, CheckFailure):
             if isinstance(error,BotMissingPermissions):
                 text = "To use this command, the bot needs the following permissions:\n"
@@ -39,8 +46,8 @@ class ICog(Cog):
                 me = guild.me if guild is not None else ctx.bot.user
                 permissions = ctx.channel.permissions_for(me)
 
-                e = Error(g=self.g, cmd_string=ctx.message.system_content
-                          , error_type=f'{type(error.original)}', error=f'{error}', traceback=f"Has : "
+                e = Error(g=g, cmd_string=ctx.message.system_content
+                          , error_type=f'{type(error)}', error=f'{error}', traceback=f"Has : "
                     f"{permissions}\n\nNeeds: {error.missing_perms}")
                 e.save()
                 await self.notify_error_bot_owner(e, ctx)
@@ -81,12 +88,12 @@ class ICog(Cog):
                 except Forbidden:
                     pass
 
-                e = Error(g=self.g, cmd_string=ctx.message.system_content
+                e = Error(g=g, cmd_string=ctx.message.system_content
                           , error_type=f'{type(error.original)}', error=f'{error}', traceback=traceback.format_exc())
                 e.save()
                 await self.notify_error_bot_owner(e, ctx)
         else:
-            e = Error(g=self.g, cmd_string=ctx.message.system_content
+            e = Error(g=g, cmd_string=ctx.message.system_content
                       , error_type=f'{type(error.original)}', error=f'{error}',traceback=traceback.format_exc())
             e.save()
             await self.notify_error_bot_owner(e, ctx)
