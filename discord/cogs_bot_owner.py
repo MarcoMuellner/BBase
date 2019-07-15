@@ -157,15 +157,6 @@ class BotOwner(ICog):
 
         await self.send_update(text,self.bot_owner_info_channel,guild,True)
 
-    @command()
-    async def add_votes(self,ctx : Context,user : Union[Member,int],votes : int):
-        if isinstance(user,int):
-            user = ctx.guild.get_member(user)
-        u = BaseUser.objects.get(g=self.g,d_id=user.id)
-        u.nr_votes +=votes
-        u.save()
-        await ctx.send(f"Gave {user.mention} {votes} votes. Has now a total of {u.nr_votes}")
-
     @Cog.listener()
     async def on_guild_join(self,guild : Guild):
         text = f"**:white_check_mark: Guild {guild.name}({guild.id}) added QODTBot! :smile:**\n"
