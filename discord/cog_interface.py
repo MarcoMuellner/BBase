@@ -24,7 +24,7 @@ class ICog(Cog):
         return perm >= self.min_perm
 
     async def notify_error_bot_owner(self, e : Error,ctx : Union[Context,Guild]):
-        bot_owner = self.bot.get_cog('BotOwner')
+        bot_owner = self.bot.get_cog('DBotOwner')
         if isinstance(ctx,Context):
             await bot_owner.send_error_notification(e,ctx.guild)
         elif isinstance(ctx,Guild):
@@ -43,7 +43,7 @@ class ICog(Cog):
                 text = "To use this command, the bot needs the following permissions:\n"
                 for i in error.missing_perms:
                     text += f"**- {i}**\n"
-                text += "Please make sure that these are available to QOTDBot."
+                text += "Please make sure that these are available to the bot."
                 await ctx.send(text)
 
                 guild = ctx.guild
@@ -135,7 +135,7 @@ class ICog(Cog):
         return member.guild_permissions.administrator or member.guild_permissions.manage_roles
 
     async def is_bot_owner(self,member : Member):
-        bot_owner = self.bot.get_cog('BotOwner')
+        bot_owner = self.bot.get_cog('DBotOwner')
         return member.id == bot_owner.bot_owner_id
 
     async def is_mod(self, u : BaseUser, member : Member):
