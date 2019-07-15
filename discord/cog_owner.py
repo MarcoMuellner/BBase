@@ -62,13 +62,14 @@ class BaseOwner(ICog):
              'access the Mod group of commands as seen in the help command. If a role is already set, this '
              'method will not remove the old role, but rather both will then have moderation privileges.'
     )
-    async def add_mod_role(self, ctx: Context, role_id: Union[int, str]):
-        if not isinstance(role_id, int):
-            role_id = int(re.findall(r"\d+", role_id)[0])
-        try:
-            role: Role = [i for i in ctx.guild.roles if i.id == role_id][0]
-        except IndexError:
-            await ctx.send(f"Sorry can not find role {role_id}")
+    async def add_mod_role(self,ctx: Context, role_id: Union[int, Role]):
+        if isinstance(role_id, int):
+            role = ctx.guild.get_role(role_id)
+        else:
+            role = role_id
+
+        if role is None:
+            await ctx.send(f"Sorry, {role_id} is not available as a role on the guild.")
             return
 
         self.g.add_role(role_id)

@@ -82,7 +82,7 @@ class ICog(Cog):
                 await ctx.send(text)
             except Forbidden:
                 u :User= self.bot.get_user(ctx.author.id)
-                dm_channel = u.create_dm()
+                dm_channel = await u.create_dm()
                 try:
                     await dm_channel.send(text)
                 except Forbidden:
