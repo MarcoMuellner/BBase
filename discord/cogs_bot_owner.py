@@ -188,7 +188,7 @@ class BotOwner(ICog):
 
     @Cog.listener()
     async def on_message(self,message : Message):
-        if message.author.id == self.bot.user.id:
+        if message.author.id == self.bot.user.id or message.author.bot:
             return
 
         if len(UserIgnore.objects.filter(user_id=message.author.id)) > 0:
