@@ -1,6 +1,7 @@
 from typing import Union
 from discord import Guild,Member
 from discord.ext.commands import Context
+from datetime import timedelta
 
 from BBase.base_db.models import BaseGuild,BaseUser
 
@@ -39,3 +40,14 @@ async def send_table(send_fun : callable, txt : str,add_raw = True):
         send_text += r
         send_text += "\n"
     await send_fun(send_text)
+
+def pretty_time(time : int):
+    d_time = timedelta(seconds=time)
+    days,hours,minutes = d_time.days, d_time.seconds//3600, (d_time.seconds//60)%60
+    seconds = time - (days*24*3600 + hours*3600 + minutes*60)
+    text = ""
+
+    for val,txt in [(days,'day'),(hours,'hour'),(minutes,'minute'),(seconds, 'second')]:
+        if val != 0:
+            text += f"{int(val)} {txt}{'' if val == 1 else 's'} "
+    return text.strip()
