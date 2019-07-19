@@ -50,7 +50,7 @@ class BaseOwner(ICog):
             user_id = user_id.id
 
         u, m = self.get_user(ctx, user_id)
-        u.g_mod = False
+        u.g_mod = True
         u.save()
         await ctx.send(f":white_check_mark:**User {m.mention if m is not None else u.d_name}({u.d_id}) "
                        f"is now a mod!**")
@@ -72,7 +72,7 @@ class BaseOwner(ICog):
             await ctx.send(f"Sorry, {role_id} is not available as a role on the guild.")
             return
 
-        self.g.add_role(role_id)
+        self.g.add_role(role.id)
         self.g.save()
         await ctx.send(f":white_check_mark:**Users with {role.mention}({role.id}) role are now mods**")
 
