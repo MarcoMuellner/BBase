@@ -1,5 +1,5 @@
 from typing import Union
-from discord import Guild,Member
+from discord import Guild,Member,Message
 from discord.ext.commands import Context
 from datetime import timedelta
 
@@ -51,3 +51,16 @@ def pretty_time(time : int):
         if val != 0:
             text += f"{int(val)} {txt}{'' if val == 1 else 's'} "
     return text.strip()
+
+async def get_pre(_,message : Message):
+    if not isinstance(message.author,Member):
+        return ";"
+
+    author_g_id = message.author.guild.id
+    try:
+        g = BaseGuild.objects.get(id=author_g_id)
+    except BaseGuild.DoesNotExist:
+        g = BaseGuild(id=author_g_id,name=message.author.guild.name)
+        g.save()
+
+    return g.prefix
