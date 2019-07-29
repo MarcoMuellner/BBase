@@ -2,6 +2,7 @@ from typing import Union
 from discord import Guild,Member,Message
 from discord.ext.commands import Context
 from datetime import timedelta
+import re
 
 from BBase.base_db.models import BaseGuild,BaseUser
 
@@ -10,12 +11,17 @@ def add_guild(ctx: Union[Context,Guild]):
     Stores a guild into the db
     :param ctx: Context from command or Guild object
     """
-    g_id = ctx.guild.id if isinstance(ctx,Context) else ctx.id
+    try:
+        g_id = ctx.guild.id if isinstance(ctx,Context) else ctx.id
+    except:
+        return False
     g_name = ctx.guild.name if isinstance(ctx, Context) else ctx.name
     try:
         BaseGuild.objects.get(id=g_id)
     except BaseGuild.DoesNotExist:
         BaseGuild(id=g_id, name=g_name).save()
+
+    return True
 
 def get_user(member : Member, g:BaseGuild):
     try:
@@ -64,3 +70,23 @@ async def get_pre(_,message : Message):
         g.save()
 
     return g.prefix
+
+def convert_str_date(time_string: str):
+    time = 0
+    if "d" in time_string:
+        days = re.findall(r"(\d+)d", time_string)[0]
+        time += int(days) * 24 * 3600
+
+    if "h" in time_string:
+        hours = re.findall(r"(\d+)h", time_string)[0]
+        time += int(hours) * 3600
+
+    if "m" in time_string:
+        minutes = re.findall(r"(\d+)m", time_string)[0]
+        time += int(minutes) * 60
+
+    if "s" in time_string:
+        seconds = re.findall(r"(\d+)s", time_string)[0]
+        time += int(seconds)
+
+    return time

@@ -115,7 +115,8 @@ class ICog(Cog):
             self.u_perm_state = AuthorState.User
 
     async def a_perm(self,ctx : Context):
-        add_guild(ctx)
+        if not add_guild(ctx):
+            return False
         g = BaseGuild.objects.get(id=ctx.guild.id)
         u = get_user(ctx.author,g)
         member = ctx.author
@@ -136,7 +137,7 @@ class ICog(Cog):
 
     async def is_bot_owner(self,member : Member):
         bot_owner = self.bot.get_cog('DBotOwner')
-        return member.id == bot_owner.bot_owner_id
+        return member.id in bot_owner.bot_owner_id
 
     async def is_mod(self, u : BaseUser, member : Member):
         if u is not None:
