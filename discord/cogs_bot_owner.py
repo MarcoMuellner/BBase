@@ -212,13 +212,14 @@ class BotOwner(ICog):
             await send_table(owner_channel.send, text, False)
         except (KeyError,Forbidden) as e:
             if self.bot_owner_id is not None:
-                u: Member = self.bot.get_user(self.bot_owner_id)
-                if u is not None:
-                    dm_channel: DMChannel = await u.create_dm()
-                    try:
-                        await send_table(dm_channel.send,text,False)
-                    except Forbidden:
-                        pass
+                for bot_owner in self.bot_owner_id:
+                    u: Member = self.bot.get_user(bot_owner)
+                    if u is not None:
+                        dm_channel: DMChannel = await u.create_dm()
+                        try:
+                            await send_table(dm_channel.send,text,False)
+                        except Forbidden:
+                            pass
 
     @Cog.listener()
     async def on_ready(self):
