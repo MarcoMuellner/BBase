@@ -41,6 +41,7 @@ class BaseUser(models.Model):
     d_name = models.CharField(max_length=64,verbose_name="Name on server",default="")
     g = models.ForeignKey(BaseGuild, verbose_name="ID of server", on_delete=models.CASCADE)
     g_mod = models.BooleanField(verbose_name="Mod flag", default=False)
+    is_bot = models.BooleanField(verbose_name="Flag if user is a bot",default=False)
 
     class Meta:
         unique_together = (('d_id','g'))

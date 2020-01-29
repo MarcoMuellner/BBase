@@ -26,6 +26,8 @@ def add_guild(ctx: Union[Context,Guild]):
 def get_user(member : Member, g:BaseGuild):
     try:
         u = BaseUser.objects.get(d_id=member.id, g=g)
+        u.d_name = member.display_name
+        u.save()
     except BaseUser.DoesNotExist:
         u = BaseUser(d_id=member.id,d_name=member.display_name, g=g)
         u.save()

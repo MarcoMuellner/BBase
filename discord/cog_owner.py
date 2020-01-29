@@ -6,6 +6,7 @@ import os
 
 from BBase.discord.cog_interface import ICog,AuthorState
 from BBase.base_db.models import BaseUser
+from BBase.helper import get_user
 path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
 
 class BaseOwner(ICog):
@@ -22,11 +23,14 @@ class BaseOwner(ICog):
                 m = i
                 break
 
-        try:
-            u = BaseUser.objects.get(d_id=u_id, g=self.g)
-        except BaseUser.DoesNotExist:
-            u = BaseUser(d_id=u_id,g=self.g,d_name=m.display_name if m is not None else "")
-            u.save()
+        if m is not None:
+            u = get_user(m,self.g)
+        else:
+            try:
+                u = BaseUser.objects.get(d_id=u_id, g=self.g)
+            except BaseUser.DoesNotExist:
+                u = BaseUser(d_id=u_id,g=self.g,d_name=m.display_name if m is not None else "")
+                u.save()
 
         return u,m
 
