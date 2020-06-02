@@ -3,8 +3,11 @@ from discord import Guild,Member,Message
 from discord.ext.commands import Context
 from datetime import timedelta
 import re
+import pytz
 
 from BBase.base_db.models import BaseGuild,BaseUser
+from db.models import Join_Leave
+
 
 def add_guild(ctx: Union[Context,Guild]):
     """
@@ -29,25 +32,28 @@ def get_user(member : Member, g:BaseGuild):
         u.d_name = member.display_name
         u.save()
     except BaseUser.DoesNotExist:
-        u = BaseUser(d_id=member.id,d_name=member.display_name, g=g)
+        u = BaseUser(d_id=member.id,d_name=member.display_name, g=g
+                     ,first_joined=member.joined_at.replace(tzinfo=pytz.UTC)
+                     ,last_joined=member.joined_at.replace(tzinfo=pytz.UTC))
         u.save()
+
     return u
 
 async def send_table(send_fun : callable, txt : str,add_raw = True):
-    rows = txt.split("\n")
-    send_text = ""
-    for r in rows:
-        if len(send_text) > 1900:
-            if add_raw:
-                send_text += "```"
-            await send_fun(send_text)
-            if add_raw:
-                send_text = "```"
+    text = [txt[i:i+1000] for i in range(0, len(txt), 1000)]
+    if add_raw:
+        for i in range(0,len(text)):
+            if i ==0:
+                text[i] += "```"
+            elif i == len(text) - 1:
+                text[i] = "```" + text[i]
             else:
-                send_text = ""
-        send_text += r
-        send_text += "\n"
-    await send_fun(send_text)
+                text[i] = "```" + text[i] + "```"
+
+    for text_part in text[:-1]:
+        await send_fun(text_part)
+
+    return await send_fun(text[-1])
 
 def pretty_time(time : int):
     d_time = timedelta(seconds=time)

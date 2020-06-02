@@ -42,6 +42,13 @@ class BaseUser(models.Model):
     g = models.ForeignKey(BaseGuild, verbose_name="ID of server", on_delete=models.CASCADE)
     g_mod = models.BooleanField(verbose_name="Mod flag", default=False)
     is_bot = models.BooleanField(verbose_name="Flag if user is a bot",default=False)
+    value_card_background = models.CharField(max_length=1024, verbose_name="Value url of imgur", null=True, default=None)
+    money_card_background = models.CharField(max_length=1024, verbose_name="Money url of imgur", null=True, default=None)
+    base_role_reached = models.BooleanField(verbose_name="Base role reached",default=False)
+    first_joined = models.DateTimeField(verbose_name="First joined time and date", default=None,null=True)
+    last_joined = models.DateTimeField(verbose_name="Last time the user joined",default=None,null=True)
+    leave_date = models.DateTimeField(verbose_name="Leave time of the user",default=None,null=True)
+    enabled_value_card_until = models.DateTimeField(verbose_name="Value card enabled until",default=None,null=True)
 
     class Meta:
         unique_together = (('d_id','g'))

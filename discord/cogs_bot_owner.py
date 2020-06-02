@@ -1,5 +1,5 @@
 from discord.ext.commands import Bot,command,Context,Cog
-from discord import DMChannel,Member,File,Guild,TextChannel,Message
+from discord import DMChannel, Member, File, Guild, TextChannel, Message, Attachment
 from discord.errors import Forbidden
 from typing import Union
 from django.utils import timezone
@@ -39,10 +39,32 @@ class BotOwner(ICog):
         else:
             self.bot_owner_info_channel = None
 
+        if 'bot_owner_images_channel' in d.keys():
+            self.bot_owner_image_channel = d['bot_owner_images_channel']
+        else:
+            self.bot_owner_image_channel = None
+
         if 'bot_owner_messages_channel' in d.keys():
             self.bot_owner_dm_channel = d['bot_owner_messages_channel']
         else:
             self.bot_owner_dm_channel = None
+
+    async def get_image_link(self,path : str,ctx : Context = None) ->str:
+        try:
+            if self.bot_owner_server is None:
+                raise KeyError()
+
+            owner_guild: Guild = [i for i in self.bot.guilds if i.id == self.bot_owner_server][0]
+            owner_channel: TextChannel = [i for i in owner_guild.channels if i.id == self.bot_owner_image_channel][0]
+            if ctx is not None:
+                msg = await owner_channel.send(file=File(path),content=f"Image requested by {ctx.author.display_name}, at {ctx.message.created_at},"
+                                                                   f"using the command {ctx.command} on {ctx.guild.name}.")
+            else:
+                msg = await owner_channel.send(file=File(path))
+            att : Attachment= msg.attachments[0]
+            return att.url
+        except (KeyError,Forbidden) as e:
+            return None
 
     @command(
         name='show_guilds',
