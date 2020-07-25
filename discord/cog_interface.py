@@ -3,7 +3,7 @@ from discord import Member,Guild,User
 from discord.ext.commands.errors import *
 from discord.errors import Forbidden
 
-from BBase.helper import  add_guild,get_user
+from BBase.helper import add_guild, get_user, send_pm
 from BBase.base_db.models import BaseGuild,BaseUser,Error
 import traceback
 from typing import Union
@@ -88,7 +88,7 @@ class ICog(Cog):
                 u :User= self.bot.get_user(ctx.author.id)
                 dm_channel = await u.create_dm()
                 try:
-                    await dm_channel.send(text)
+                    await send_pm(self.bot,u,text)
                 except Forbidden:
                     pass
 

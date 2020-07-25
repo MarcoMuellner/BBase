@@ -49,6 +49,8 @@ class BaseUser(models.Model):
     last_joined = models.DateTimeField(verbose_name="Last time the user joined",default=None,null=True)
     leave_date = models.DateTimeField(verbose_name="Leave time of the user",default=None,null=True)
     enabled_value_card_until = models.DateTimeField(verbose_name="Value card enabled until",default=None,null=True)
+    bingo_message = models.BooleanField(verbose_name="Received bingo message",default=False)
+    active_user = models.BooleanField(verbose_name="Flags this user as active",default=False)
 
     class Meta:
         unique_together = (('d_id','g'))

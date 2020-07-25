@@ -1,12 +1,15 @@
 from typing import Union
-from discord import Guild,Member,Message
-from discord.ext.commands import Context
+from discord import Guild, Member, Message, DMChannel
+from discord.ext.commands import Context, Bot
 from datetime import timedelta
 import re
 import pytz
 
 from BBase.base_db.models import BaseGuild,BaseUser
 from db.models import Join_Leave
+import typing
+if typing.TYPE_CHECKING:
+    from discord_handler.cogs import DBotOwner
 
 
 def add_guild(ctx: Union[Context,Guild]):
@@ -26,7 +29,24 @@ def add_guild(ctx: Union[Context,Guild]):
 
     return True
 
-def get_user(member : Member, g:BaseGuild):
+async def send_pm(bot : Bot,u : BaseUser, text : str):
+    member : Member = bot.get_user(u.d_id)
+    if member is not None:
+        dm_channel : DMChannel = await member.create_dm()
+    else:
+        return
+    try:
+        await dm_channel.send(text)
+    except Exception as e:
+        raise e
+    finally:
+        bot_owner : 'DBotOwner'= bot.get_cog('DBotOwner')
+        await bot_owner.send_update(f'Sent to user {u.d_name}({u.d_id})\n\n;;' + text,bot_owner.dms_id,
+                                    None)
+
+def get_user(member : Member, g:BaseGuild = None):
+    if g is None:
+        g = BaseGuild.objects.get(id=member.guild.id)
     try:
         u = BaseUser.objects.get(d_id=member.id, g=g)
         u.d_name = member.display_name
@@ -40,10 +60,10 @@ def get_user(member : Member, g:BaseGuild):
     return u
 
 async def send_table(send_fun : callable, txt : str,add_raw = True):
-    text = [txt[i:i+1000] for i in range(0, len(txt), 1000)]
+    text = [txt[i:i+1700] for i in range(0, len(txt), 1700)]
     if add_raw:
         for i in range(0,len(text)):
-            if i ==0:
+            if i ==0 and not text[i].endswith("```"):
                 text[i] += "```"
             elif i == len(text) - 1:
                 text[i] = "```" + text[i]
