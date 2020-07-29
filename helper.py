@@ -60,10 +60,10 @@ def get_user(member : Member, g:BaseGuild = None):
     return u
 
 async def send_table(send_fun : callable, txt : str,add_raw = True):
-    text = [txt[i:i+1700] for i in range(0, len(txt), 1700)]
+    text = [txt[i:i+1000] for i in range(0, len(txt), 1000)]
     if add_raw:
         for i in range(0,len(text)):
-            if i ==0 and not text[i].endswith("```"):
+            if i ==0:
                 text[i] += "```"
             elif i == len(text) - 1:
                 text[i] = "```" + text[i]

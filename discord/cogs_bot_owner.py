@@ -54,6 +54,11 @@ class BotOwner(ICog):
         else:
             self.dms_id = None
 
+        if 'bot-comm-channel' in d.keys():
+            self.bot_comm_channel = d['bot-comm-channel']
+        else:
+            self.bot_comm_channel = None
+
     async def get_image_link(self,path : str,ctx : Context = None) ->str:
         try:
             if self.bot_owner_server is None:

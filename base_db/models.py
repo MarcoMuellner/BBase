@@ -77,3 +77,10 @@ class Error(models.Model):
 
     def __str__(self):
         return self.__repr__()
+
+class MilestoneData(models.Model):
+    g = models.ForeignKey(BaseGuild,on_delete=models.CASCADE,verbose_name="Guild this belongs to")
+    name = models.CharField(verbose_name="Name of the milestone",max_length=1024,unique=True)
+    last_reached = models.DateTimeField(verbose_name="When this milestone was last reached",null=True,default=None)
+    nr = models.FloatField(verbose_name="Number that has been reached with this milestone.")
+    last_checked = models.DateTimeField(verbose_name="Last checked time for milestone",default=timezone.now)
