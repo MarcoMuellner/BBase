@@ -1,16 +1,42 @@
+import functools
 from typing import Union
-from discord import Guild, Member, Message, DMChannel
+from discord import Guild, Member, Message, DMChannel, Embed, NotFound
 from discord.ext.commands import Context, Bot
 from datetime import timedelta
 import re
 import pytz
+from django.db.models import Max
 
-from BBase.base_db.models import BaseGuild,BaseUser
-from db.models import Join_Leave
+from BBase.base_db.models import BaseUser,BaseGuild
 import typing
 if typing.TYPE_CHECKING:
     from discord_handler.cogs import DBotOwner
 
+
+async def get_member(d_g : Guild, u_id : int) -> Member:
+    m = d_g.get_member(u_id)
+    if m is None:
+        try:
+            m = await d_g.fetch_member(u_id)
+        except NotFound:
+            m = None
+
+    return m
+
+def force_sync(fn):
+    '''
+    turn an async function to sync function
+    '''
+    import asyncio
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        res = fn(*args, **kwargs)
+        if asyncio.iscoroutine(res):
+            return asyncio.get_event_loop().run_until_complete(res)
+        return res
+
+    return wrapper
 
 def add_guild(ctx: Union[Context,Guild]):
     """
@@ -29,22 +55,25 @@ def add_guild(ctx: Union[Context,Guild]):
 
     return True
 
-async def send_pm(bot : Bot,u : BaseUser, text : str):
+async def send_pm(bot : Bot,u : BaseUser, text : str,embed : Embed = None):
     member : Member = bot.get_user(u.d_id)
     if member is not None:
         dm_channel : DMChannel = await member.create_dm()
     else:
         return
     try:
-        await dm_channel.send(text)
+        if embed is None:
+            await dm_channel.send(text)
+        else:
+            await dm_channel.send(text,embed=embed)
     except Exception as e:
         raise e
     finally:
         bot_owner : 'DBotOwner'= bot.get_cog('DBotOwner')
         await bot_owner.send_update(f'Sent to user {u.d_name}({u.d_id})\n\n;;' + text,bot_owner.dms_id,
-                                    None)
+                                    None,embed=embed)
 
-def get_user(member : Member, g:BaseGuild = None):
+def get_user(member : Member, g:BaseGuild = None) -> BaseUser:
     if g is None:
         g = BaseGuild.objects.get(id=member.guild.id)
     try:
@@ -59,21 +88,24 @@ def get_user(member : Member, g:BaseGuild = None):
 
     return u
 
-async def send_table(send_fun : callable, txt : str,add_raw = True):
-    text = [txt[i:i+1000] for i in range(0, len(txt), 1000)]
+async def send_table(send_fun: callable, txt: str, add_raw=True, embed: Embed = None):
+    text = [txt[i:i + 1900] for i in range(0, len(txt), 1900)]
     if add_raw:
-        for i in range(0,len(text)):
-            if i ==0:
+        for i in range(0, len(text)):
+            if i == 0 and not text[i].endswith('```'):
                 text[i] += "```"
-            elif i == len(text) - 1:
+            elif i == len(text) - 1 and not text[i].startswith('```'):
                 text[i] = "```" + text[i]
-            else:
+            elif not text[i].startswith('```') and not text[i].endswith('```'):
                 text[i] = "```" + text[i] + "```"
 
     for text_part in text[:-1]:
         await send_fun(text_part)
 
-    return await send_fun(text[-1])
+    if embed is not None:
+        return await send_fun(text[-1], embed=embed)
+    else:
+        return await send_fun(text[-1])
 
 def pretty_time(time : int):
     d_time = timedelta(seconds=time)

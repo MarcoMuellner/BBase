@@ -3,16 +3,23 @@ from discord import Member,Guild,User
 from discord.ext.commands.errors import *
 from discord.errors import Forbidden
 
-from BBase.helper import add_guild, get_user, send_pm
-from BBase.base_db.models import BaseGuild,BaseUser,Error
+from BBase.helper import add_guild, get_user, send_pm, get_member
 import traceback
-from typing import Union
+from typing import Union, TYPE_CHECKING
+
+from db.models import GuildSetting, Error
+from BBase.base_db.models import BaseUser,BaseGuild
+
+if TYPE_CHECKING:
+    from discord_handler.cogs import DBotOwner
+
 
 class AuthorState:
     User = 1
-    Mod = 2
-    Owner = 3
-    BotOwner = 4
+    Committee = 2
+    Mod = 3
+    Owner = 4
+    BotOwner = 5
 
 class ICog(Cog):
     def __init__(self, bot: Bot,min_perm :int):
@@ -24,7 +31,7 @@ class ICog(Cog):
         return perm >= self.min_perm
 
     async def notify_error_bot_owner(self, e : Error,ctx : Union[Context,Guild]):
-        bot_owner = self.bot.get_cog('DBotOwner')
+        bot_owner : 'DBotOwner' = self.bot.get_cog('DBotOwner')
         if isinstance(ctx,Context):
             await bot_owner.send_error_notification(e,ctx.guild)
         elif isinstance(ctx,Guild):
@@ -92,6 +99,8 @@ class ICog(Cog):
                 except Forbidden:
                     pass
 
+                print(f'{type(error.original)}')
+                print(traceback.format_exc())
                 e = Error(g=g, cmd_string=ctx.message.system_content
                           , error_type=f'{type(error.original)}', error=f'{error}', traceback=traceback.format_exc())
                 e.save()
@@ -101,12 +110,14 @@ class ICog(Cog):
                       , error_type=f'{type(error.original)}', error=f'{error}',traceback=traceback.format_exc())
             e.save()
             await self.notify_error_bot_owner(e, ctx)
+            print(f'{type(error.original)}')
+            print(traceback.format_exc())
             await ctx.send(f'Sorry an error occured. My creator has been notified.')
 
     async def cog_before_invoke(self, ctx : Context):
         add_guild(ctx)
         self.g = BaseGuild.objects.get(id=ctx.guild.id)
-        self.m : Member = ctx.guild.get_member(ctx.author.id)
+        self.m : Member = await get_member(ctx.guild,ctx.author.id)
         self.u : BaseUser = get_user(self.m, self.g)
         try:
             self.u_perm_state = await self.a_perm_intern(self.u,self.m)
@@ -129,6 +140,8 @@ class ICog(Cog):
             return AuthorState.Owner
         elif await self.is_mod(u,member):
             return AuthorState.Mod
+        elif await self.is_committee(u,member):
+            return AuthorState.Committee
         else:
             return AuthorState.User
 
@@ -154,6 +167,13 @@ class ICog(Cog):
             mod = False
 
         return mod or member.guild_permissions.ban_members
+
+    async def is_committee(self,u : BaseUser, member : Member):
+        gs = GuildSetting.objects.get(g=u.g)
+        if gs.committee_role is None:
+            return False
+
+        return len([i for i in member.roles if i.id == gs.committee_role])
 
     @Cog.listener()
     async def on_guild_join(self, guild: Guild):

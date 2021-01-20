@@ -53,10 +53,10 @@ class BaseOwner(ICog):
         if isinstance(user_id,Member):
             user_id = user_id.id
 
-        u, m = self.get_user(ctx, user_id)
+        u= get_user(ctx.author)
         u.g_mod = False
         u.save()
-        await ctx.send(f":white_check_mark:**User {m.mention if m is not None else u.d_name}({u.d_id}) "
+        await ctx.send(f":white_check_mark:**User {ctx.author.mention if ctx.author is not None else u.d_name}({u.d_id}) "
                        f"is now a mod!**")
 
     @command(
@@ -98,10 +98,10 @@ class BaseOwner(ICog):
              'role, he will still have moderation privileges!'
     )
     async def rm_mod(self, ctx: Context, user_id: Union[int, str]):
-        u,m = self.get_user(ctx,user_id)
+        u= get_user(ctx.author)
         u.g_mod = False
         u.save()
-        await ctx.send(f":red_circle:**User {m.mention if m is not None else u.d_name}({u.d_id}) "
+        await ctx.send(f":red_circle:**User {ctx.author.mention if ctx.author is not None else u.d_name}({u.d_id}) "
                        f"is no longer a mod!**")
 
     @command(

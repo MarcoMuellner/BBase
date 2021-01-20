@@ -1,5 +1,5 @@
 from discord.ext.commands import Bot,command,Context,Cog
-from discord import DMChannel, Member, File, Guild, TextChannel, Message, Attachment
+from discord import DMChannel, Member, File, Guild, TextChannel, Message, Attachment, Embed
 from discord.errors import Forbidden
 from typing import Union
 from django.utils import timezone
@@ -15,8 +15,10 @@ from aiohttp.web import Request
 import logging
 from json.decoder import JSONDecodeError
 
+from db.models import Error
 from BBase.helper import send_table
-from BBase.base_db.models import BaseUser,BaseGuild,Error,UserIgnore
+from BBase.base_db.models import UserIgnore
+from BBase.base_db.models import BaseUser,BaseGuild
 
 logger = logging.getLogger(__name__)
 path = os.path.dirname(os.path.realpath(__file__)) + "/../../"
@@ -127,28 +129,6 @@ class BotOwner(ICog):
         os.remove(p_growth)
         os.remove(p_total)
 
-
-    @command(
-        name='show_errors',
-        help='Shows all errors that occured in a given timeframe'
-    )
-    async def show_errors(self,ctx : Context, nr_of_days : int):
-        table = Texttable()
-        tabledata = [["Time","Guild", "CMD string", "Error Type", "Error"]]
-        er = Error.objects.filter(time_stamp__gt=(timezone.now() + datetime.timedelta(-nr_of_days))).order_by('time_stamp')
-        for i in er:
-            i : Error
-            in_guild = None
-            for j in ctx.bot.guilds:
-                if j.id == i.g.id:
-                    in_guild = j.name
-            tabledata.append([f'{i.time_stamp.strftime("%Y-%m-%d %H:%M")}',in_guild,i.cmd_string,i.error_type,i.error])
-        table.set_deco(Texttable.VLINES | Texttable.HEADER | Texttable.BORDER)
-        table.add_rows(tabledata, True)
-        table.set_cols_width([16, 10, 20, 15,40])
-        txt = "```" + table.draw() + "```"
-        await send_table(ctx.send,txt)
-
     @command(
         name='broadcast_update',
         help='Broadcasts a message to all servers'
@@ -219,10 +199,12 @@ class BotOwner(ICog):
 
         if isinstance(message.author,Member):
             return
-        else:
+        elif not message.author.bot and len(message.content) != 0:
             text = f"**:e_mail:@here User {message.author.name} ({message.author.id}) has sent you a message:e_mail:\n\n **"
             text += f"Time: {message.created_at.strftime('%Y-%m-%d %H:%M')}\n"
             text += f"Content: _{message.content}_"
+        else:
+            return
 
         if 'server_invite' in message.content:
             text_invite = "Hi there. If you need any help setting up QOTD-Bot you can join our Support server for further " \
@@ -231,7 +213,7 @@ class BotOwner(ICog):
 
         await self.send_update(text, self.bot_owner_dm_channel,None)
 
-    async def send_update(self,text : str,channel : int, guild : Union[Guild,None],always_send = False):
+    async def send_update(self,text : str,channel : int, guild : Union[Guild,None],always_send = False,embed : Embed = None):
         try:
             if self.bot_owner_server is None or channel is None:
                 raise KeyError()
@@ -240,8 +222,11 @@ class BotOwner(ICog):
                 return
 
             owner_guild: Guild = [i for i in self.bot.guilds if i.id == self.bot_owner_server][0]
-            owner_channel: TextChannel = [i for i in owner_guild.channels if i.id == channel][0]
-            await send_table(owner_channel.send, text, False)
+            try:
+                owner_channel: TextChannel = [i for i in owner_guild.channels if i.id == channel][0]
+            except KeyError:
+                return
+            await send_table(owner_channel.send, text, False,embed=embed)
         except (KeyError,Forbidden) as e:
             if self.bot_owner_id is not None:
                 for bot_owner in self.bot_owner_id:
@@ -255,16 +240,7 @@ class BotOwner(ICog):
 
     @Cog.listener()
     async def on_ready(self):
-        app = web.Application()
-        app.add_routes([web.post('/', self.handle)])
-
-        runner = web.AppRunner(app)
-        await runner.setup()
-        site = web.TCPSite(runner, '0.0.0.0', 8080)
-        try:
-            await site.start()
-        except OSError:
-            pass
+        pass
 
     async def handle_upvote(self,data):
         if 'bot' not in data.keys() or 'user' not in data.keys() or 'type' not in data.keys():

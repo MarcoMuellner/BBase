@@ -2,14 +2,14 @@ from django.db import models
 from django.utils import timezone
 
 class BaseGuild(models.Model):
-    id = models.IntegerField(verbose_name="Guild id, discord",primary_key=True)
-    name = models.CharField(max_length=256,verbose_name="Name of server")
+    id = models.BigIntegerField(verbose_name="Guild id, discord",primary_key=True)
+    name = models.CharField(max_length=1024,verbose_name="Name of server")
     time_stamp = models.DateTimeField(verbose_name="Date of adding the guild", default=timezone.now)
-    mod_role = models.CharField(max_length=512, verbose_name="Role id of mods", null=True, default=None)
+    mod_role = models.CharField(max_length=1024, verbose_name="Role id of mods", null=True, default=None)
     log_channel = models.IntegerField(verbose_name="Channel for logging", null=True, default=None)
     show_updates = models.BooleanField(verbose_name="Show updates in logchannel", default=True)
     run = models.BooleanField(verbose_name="Bot running for guild", default=False)
-    prefix = models.CharField(max_length=10, verbose_name="Prefix for guild", default=";")
+    prefix = models.CharField(max_length=1024, verbose_name="Prefix for guild", default=";")
 
     def __repr__(self):
         return f"{self.id}:{self.name}"
@@ -37,7 +37,7 @@ class BaseGuild(models.Model):
 
 
 class BaseUser(models.Model):
-    d_id = models.IntegerField(verbose_name="User id, discord")
+    d_id = models.BigIntegerField(verbose_name="User id, discord")
     d_name = models.CharField(max_length=64,verbose_name="Name on server",default="")
     g = models.ForeignKey(BaseGuild, verbose_name="ID of server", on_delete=models.CASCADE)
     g_mod = models.BooleanField(verbose_name="Mod flag", default=False)
@@ -51,6 +51,8 @@ class BaseUser(models.Model):
     enabled_value_card_until = models.DateTimeField(verbose_name="Value card enabled until",default=None,null=True)
     bingo_message = models.BooleanField(verbose_name="Received bingo message",default=False)
     active_user = models.BooleanField(verbose_name="Flags this user as active",default=False)
+    notify_upvote = models.BooleanField(verbose_name="Marks this as a user who wants to be reminded to upvote",default=False)
+    notified = models.BooleanField(verbose_name="Marks that this user has been notified",default=False)
 
     class Meta:
         unique_together = (('d_id','g'))
@@ -62,25 +64,4 @@ class BaseUser(models.Model):
         return self.__repr__()
 
 class UserIgnore(models.Model):
-    user_id = models.IntegerField(verbose_name="User id that should be ignored in messages")
-
-class Error(models.Model):
-    g = models.ForeignKey(BaseGuild,on_delete=models.CASCADE,verbose_name="Guild where error happened")
-    cmd_string = models.CharField(max_length=512,verbose_name="Command string that was executed")
-    error_type = models.CharField(max_length=64,verbose_name="Error type")
-    error = models.CharField(max_length=1024,verbose_name="Error string")
-    time_stamp =  models.DateTimeField(verbose_name="Time of error.",default=timezone.now)
-    traceback = models.CharField(verbose_name="Traceback of error",default=None,null=True,max_length=5000)
-
-    def __repr__(self):
-        return f"{self.error} on {self.g.name}"
-
-    def __str__(self):
-        return self.__repr__()
-
-class MilestoneData(models.Model):
-    g = models.ForeignKey(BaseGuild,on_delete=models.CASCADE,verbose_name="Guild this belongs to")
-    name = models.CharField(verbose_name="Name of the milestone",max_length=1024,unique=True)
-    last_reached = models.DateTimeField(verbose_name="When this milestone was last reached",null=True,default=None)
-    nr = models.FloatField(verbose_name="Number that has been reached with this milestone.")
-    last_checked = models.DateTimeField(verbose_name="Last checked time for milestone",default=timezone.now)
+    user_id = models.BigIntegerField(verbose_name="User id that should be ignored in messages")
